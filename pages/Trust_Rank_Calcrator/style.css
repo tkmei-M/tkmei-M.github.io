@@ -147,7 +147,10 @@ textarea {
     font-size: 0.9em;
     color: #777;
   }
-  
+footer a {
+    color: #777;
+    /* text-decoration: none; */
+  }
 /* レスポンシブデザイン */
 @media (orientation: portrait) {
   body {
