@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" content="width=device-width, initial-scale=1.0" />
+    <title>キズナランク計算機</title>
+    <!-- Tesseract.js のCDN読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>キズナランク計算機</h1>
+    <label
+      >使い方は<a href="/pages/Trust_Rank_Calcrator/about.html"
+        >こちら</a
+      ></label
+    >
+    <input type="file" id="uploader" />
+    <div id="settings" class="block">
+      <h2>目標のキズナランク</h2>
+      <label for="targetRank">目標ランク:</label>
+      <input type="number" id="targetRank" min="1" max="75" value="1" />
+    </div>
+    <div id="playConditions" class="block">
+      <h2>プレイ条件</h2>
+      <label for="scoreRank">スコアランク:</label>
+      <select id="scoreRank">
+        <option value="S">S (150 EXP)</option>
+        <option value="A">A (130 EXP)</option>
+        <option value="B">B (110 EXP)</option>
+        <option value="C">C (100 EXP)</option>
+        <option value="D">D (50 EXP)</option>
+      </select>
+      <label for="liveBoost">ライブブースト消費量:</label>
+      <select id="liveBoost">
+        <option value="0">0 (1倍)</option>
+        <option value="1">1 (5倍)</option>
+        <option value="2">2 (10倍)</option>
+        <option value="3">3 (15倍)</option>
+        <option value="4">4 (20倍)</option>
+        <option value="5">5 (25倍)</option>
+        <option value="6">6 (27倍)</option>
+        <option value="7">7 (29倍)</option>
+        <option value="8">8 (31倍)</option>
+        <option value="9">9 (33倍)</option>
+        <option value="10">10 (35倍)</option>
+      </select>
+      <label for="songSelect">楽曲:</label>
+      <select id="songSelect">
+        <option value="独りんぼエンヴィー">独りんぼエンヴィー (0:01:14)</option>
+        <option value="ロストエンファウンド">
+          ロストエンファウンド (0:02:36)
+        </option>
+        <option value="ビバハピ">ビバハピ (0:01:34)</option>
+        <option value="Sage">Sage (0:02:30)</option>
+        <option value="メルト">メルト (0:03:02)</option>
+      </select>
+    </div>
+    <button id="start">認識開始</button>
+    <p id="status"></p>
+    <pre
+      id="calculationResult"
+      style="font-weight: bold; color: blue; white-space: pre-wrap"
+    ></pre>
+    <div id="currentRank" class="block">
+      <h2>現在のキズナランク</h2>
+      <img
+        id="processedImage2"
+        alt="処理済み画像2"
+        style="border: 1px solid #ccc; max-width: 500px"
+      /><br />
+      <textarea id="result2" cols="20" rows="1"></textarea>
+    </div>
+    <div id="results" class="block">
+      <h2>次のキズナランクまでの残りEXP</h2>
+      <img
+        id="processedImage1"
+        alt="処理済み画像1"
+        style="border: 1px solid #ccc; max-width: 500px"
+      /><br />
+      <textarea id="result1" cols="20" rows="1"></textarea>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
