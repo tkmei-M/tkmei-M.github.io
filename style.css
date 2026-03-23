@@ -140,6 +140,20 @@ textarea {
 .usage-list li {
   margin-bottom: 5px;
 }
+
+.title {
+  /* font-size: 1.5em; */
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  text-decoration: none;
+}
+  footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #777;
+  }
 /* レスポンシブデザイン */
 @media (orientation: portrait) {
   body {
@@ -178,12 +192,7 @@ textarea {
   }
 }
 
-  footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.9em;
-    color: #777;
-  }
+
 @media (orientation: landscape) {
   #settings, #playConditions {
     justify-content: flex-start;
