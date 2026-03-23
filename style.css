@@ -178,6 +178,12 @@ textarea {
   }
 }
 
+  footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #777;
+  }
 @media (orientation: landscape) {
   #settings, #playConditions {
     justify-content: flex-start;
