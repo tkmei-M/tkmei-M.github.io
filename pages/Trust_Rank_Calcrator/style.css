@@ -206,7 +206,7 @@ footer a {
   }
 }
 
-@media (orientation: portrait) and (min-width: 768px) {
+@media (orientation: portrait) and (min-width: 699px) {
   body, #start, #result1, #result2 {
     font-size: 1.8em;
   }
