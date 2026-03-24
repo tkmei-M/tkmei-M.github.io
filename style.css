@@ -148,13 +148,12 @@ textarea {
   color: #2c3e50;
   text-decoration: none;
 }
-footer {
+  footer {
     text-align: center;
     margin-top: 20px;
     font-size: 0.9em;
     color: #777;
   }
-
 footer a {
     color: #777;
     /* text-decoration: none; */
@@ -196,7 +195,6 @@ footer a {
     text-align: center;
   }
 }
-
 
 @media (orientation: landscape) {
   #settings, #playConditions {
