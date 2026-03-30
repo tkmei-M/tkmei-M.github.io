@@ -13,7 +13,7 @@ def csv_to_json(csv_file_path, json_file_path):
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
 if __name__ == "__main__":
-    csv_file_path = 'Music_Length_Table.csv'  # 変換したいCSVファイルのパス
-    json_file_path = 'Music_Length_Table.json'  # 出力するJSONファイルのパス
+    csv_file_path = 'pages\\Trust_Rank_Calcrator\\Table\\Rank_table.csv'  # 変換したいCSVファイルのパス
+    json_file_path = 'pages\\Trust_Rank_Calcrator\\Table\\Rank_table.json'  # 出力するJSONファイルのパス
     csv_to_json(csv_file_path, json_file_path)
     print(f"CSVファイル '{csv_file_path}' を JSONファイル '{json_file_path}' に変換しました。")
