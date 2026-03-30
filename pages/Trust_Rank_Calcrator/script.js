@@ -381,8 +381,8 @@ startBtn.addEventListener("click", () => {
         ]);
 
         // 計算実行
-        const currentRankText = result2.value.trim();
-        const remainingEXPText = result1.value.trim();
+        const currentRankText = result2.value.trim().replace(/\s/g, ""); // 空白を削除
+        const remainingEXPText = result1.value.trim().replace(/\s/g, ""); // 空白を削除
         const targetRankValue = parseInt(targetRank.value);
         const scoreRankValue = scoreRank.value;
         const liveBoostValue = liveBoost.value;
