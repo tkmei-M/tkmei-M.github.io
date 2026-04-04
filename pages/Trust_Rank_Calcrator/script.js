@@ -403,7 +403,8 @@ startBtn.addEventListener("click", () => {
             liveBoostValue,
           );
           const totalTime = calculateTotalTime(playsNeeded, songName);
-          calculationResult.innerText = `目標ランク ${targetRankValue} までの残りEXP: ${remainingEXPResult}\nあと ${playsNeeded} 回プレイが必要です\n総時間: ${totalTime}`;
+          const crystalsNeeded = playsNeeded * parseInt(liveBoostValue) * 10;
+          calculationResult.innerText = `目標ランク ${targetRankValue} までの残りEXP: ${remainingEXPResult}\nあと ${playsNeeded} 回プレイが必要です\n総時間: ${totalTime}\n消費クリスタル: ${crystalsNeeded}`;
         } else {
           calculationResult.innerText = "数字の抽出に失敗しました";
         }
