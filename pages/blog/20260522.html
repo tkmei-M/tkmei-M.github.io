@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      2026年05月22日 - ポイント調整アナライザの計算式をアップデートしよう
+    </title>
+    <link rel="stylesheet" href="/style.css" />
+    <!-- MathJax用の埋め込みコード（CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>ポイント調整アナライザの計算式をアップデートしよう</h1>
+      <p class="date">2026.05.22</p>
+    </header>
+    <main>
+      <article>
+        <div class="block">
+          <h2>はじめに</h2>
+          <p>
+            はじめましての方ははじめまして、そうでない方はいつもお世話になっております。管理者の匿名Mです。<br />先日、スプレッドシートにて公開しているポイント調整アナライザの計算式を変更しました。本日はそのアップデートノート的な何かです。
+          </p>
+        </div>
+        <div class="block">
+          <h2>まず何をいじったの？</h2>
+          <p>
+            今回の変更内容は、主に<b>ポイント・編成検索</b>シートとそれを計算する<b>pt</b>シート（通常は非表示）です。見えないところですが、計算量を減らすことで主に低スペックなPCやスマートフォンでの実用性を向上させています。
+          </p>
+          <img
+            src="/images/20260522_pt_sheet_before.png"
+            alt="以前のptシート"
+          />
+          <p class="caption">以前のptシート</p>
+          <img
+            src="/images/20260522_pt_sheet_after.png"
+            alt="改良後のptシート"
+          />
+          <p class="caption">改良後のptシート</p>
+        </div>
+        <div class="block">
+          <h2>どこをいじった？</h2>
+          <p>
+            このシートを編集するにあたり、イベントptの計算式を確認することが重要になります。以下にイベントPtの計算式を記します。
+          </p>
+          <div class="math-block">
+            <p class="mathjax-container">
+              \[
+              \text{イベントP}=\left[\left(100+\left[\frac{\text{スコア}}{20000}\right]\right)\times\text{イベントボーナス}\times\frac{基礎点}{100}\right]\times\text{ライブボーナス}
+              \]
+            </p>
+            <p class="caption">
+              式導出:
+              <a href="https://x.com/SYLVIA0x0/status/1676864266996154368"
+                >@SYLVIA0x0</a
+              >
+            </p>
+          </div>
+          <p class="caption">
+            本来は小数点第2位以下の切り捨てなどがありますが、省略しています
+          </p>
+          <p>
+            ここで、ガウス記号による小数点以下切り捨てを一旦無視して一次方程式として見てみましょう。
+          </p>
+          <div class="math-block">
+            <p class="mathjax-container">
+              \[
+              \text{イベントP}=\left(100+\frac{\text{スコア}}{20000}\right)\times\text{イベントボーナス}\times\frac{基礎点}{100}\times\text{ライブボーナス}
+              \]
+            </p>
+          </div>
+          <p>
+            この一次方程式をイベントボーナス値について解くと、以下のようになります。
+          </p>
+          <div class="math-block">
+            <p class="mathjax-container">
+              \[
+              \text{イベントボーナス}=\left(100+\frac{\text{スコア}}{20000}\right)^{-1}\times\frac{1}{\text{イベントP}}\times\frac{100}{\text{基礎点}}\times\frac{1}{\text{ライブボーナス}}
+              \]
+            </p>
+          </div>
+          <p class="caption">
+            通分が面倒なのでそのまま逆数を取りましたが、どうせ機械が計算するので（
+          </p>
+          <p>
+            そして、この式をスコアごとに計算しておおよそ組みたいイベントボーナス値の近似値を求め、その周囲のポイントで計算してみることにします。計算方式の変更で、従来は\(\left(125,1981\right)\)行列の成分すべてを計算し、247625個のセルを計算していたのが、この計算方式の導入によって計算を行うセルが約880個にまで削減されました。<strong
+              >すごい！！！（自画自賛）</strong
+            >
+          </p>
+        </div>
+        <div class="block">
+          <h2>どのくらい変わった？？</h2>
+          <p>
+            ぶっちゃけると、<b>表面的な体感速度はあまり変わっていません。</b
+            ><sub>ﾁｮｯﾄﾏｯﾃﾌﾞﾗｳｻﾞﾊﾞｯｸｼﾅｲﾃﾞ</sub
+            ><br />速度はあまり変わっていませんが、これは<b>メモリ容量に余裕のあるPCでの話</b>。メモリ容量の少ないPCやスマートフォンなどでは、体感のレスポンスが変わってくるのではないかな、と思います。<br />その理由が、こちら。
+          </p>
+          <blockquote class="twitter-tweet">
+            <p lang="ja" dir="ltr">
+              セル参照が増えてるから表面的な計算速度はあまり変わってないどころかむしろ低下してるように見えるけど，実際に計算してるときのメモリ使用量は意外と削減できてる<br />シートを開いた時の重さも明らかに軽くなってるし，これ低性能なノートPCとかスマホで開いたとき結構変わるのでは
+              <a href="https://t.co/Zy8Z9inNxW">https://t.co/Zy8Z9inNxW</a>
+              <a href="https://t.co/QFcVuftqlm">pic.twitter.com/QFcVuftqlm</a>
+            </p>
+            &mdash; T K M (@tkmei_M)
+            <a
+              href="https://twitter.com/tkmei_M/status/2056916102991712705?ref_src=twsrc%5Etfw"
+              >May 20, 2026</a
+            >
+          </blockquote>
+          <script
+            async
+            src="https://platform.twitter.com/widgets.js"
+            charset="utf-8"
+          ></script>
+          <p>
+            Chromeのタスクマネージャーで確認したところ、メモリ使用量を<b>3分の1以上</b>削減できていることを確認しました。とはいえセル参照が増えているぶん、体感の速度はあまり変化していないどころかむしろ悪化しているようにも見えますが…<br />ちょっとしたフリーズなどは減らせるのではないかな、と考えています。
+          </p>
+        </div>
+        <div class="block">
+          <h2>おわりに</h2>
+          <p>
+            いかがでしたでしょうか。計算の内容自体は中学1年生で学ぶ一次方程式の考え方に基づいていますので、割と読みやすかったのではないかと思います。<s
+              >（日本語が読みづらかったかもしれませんが）</s
+            ><br />現在某情報系学部で情報とそれに関する数学の知識を学んでいますので、行列の知識や解析学の知識を今後のツール開発に活かせればな、と考えています。<br />それでは、またどこかでお会いしましょう。
+          </p>
+        </div>
+      </article>
+    </main>
+    <footer>
+      <p>&copy; 2026 M-san Lab. All rights reserved.</p>
+      <p>
+        <a href="https://x.com/tkmei_M">Twitter</a>
+      </p>
+      <p>
+        <a href="https://note.com/tkmei_m">note</a>
+      </p>
+      <p><a href="/">TOPに戻る</a></p>
+    </footer>
+  </body>
+</html>

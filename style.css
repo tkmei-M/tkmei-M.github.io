@@ -36,6 +36,19 @@ h2 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.math-block {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mathjax-container {
+  /* 最小サイズ 14px、画面幅の3.5%を基準にし、最大24pxなどに制限 */
+  font-size: clamp(1px, 2.2vw, 17px); 
+}
+
 #calculationResult {
   font-size: 1.5em;
 }
@@ -141,12 +154,25 @@ textarea {
   margin-bottom: 5px;
 }
 
+.caption {
+  text-align: center;
+  font-size: 0.9em;
+  color: #777;
+  /* margin-top: 5px; */
+}
 .title {
   /* font-size: 1.5em; */
   font-weight: bold;
   margin-bottom: 10px;
   color: #2c3e50;
   text-decoration: none;
+}
+
+.date {
+  text-align: center;
+  font-size: 0.8em; 
+  margin-bottom: 10px;
+  color: #344351;
 }
   footer {
     text-align: center;
