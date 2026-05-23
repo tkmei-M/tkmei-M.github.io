@@ -158,6 +158,13 @@ footer a {
     color: #777;
     /* text-decoration: none; */
   }
+
+  .back-to-home {
+    color: #777;
+    text-align: left;
+    font-size: 1.2em;
+    /* text-decoration: none; */
+  }
 /* レスポンシブデザイン */
 @media (orientation: portrait) {
   body {
