@@ -1,0 +1,318 @@
+/* リセット */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f9f9f9;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+h2 {
+  margin-bottom: 10px;
+  color: #34495e;
+  font-size: 1.2em;
+}
+
+.block {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#note {
+  font-size: 0.5 rem;
+  color: #2c3e50;
+}
+
+
+#calculationResult {
+  font-size: 1.5em;
+}
+#settings, #playConditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+#settings label, #playConditions label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+#targetRank {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 80px;
+}
+
+select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 120px;
+}
+
+#start {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s;
+}
+
+#start:hover {
+  background-color: #2980b9;
+}
+
+#uploader {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+
+  /* ホバー時のスタイル */
+  #uploader:hover {
+    background-color: #2980b9;
+  }
+
+#status {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+#calculationResult {
+  background-color: #ecf0f1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #bdc3c7;
+  white-space: pre-wrap;
+  font-family: monospace;
+  margin-bottom: 10px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+textarea {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.list {
+  /* list-style-type: disc; */
+  padding-left: 40px;
+  margin-top: 10px;
+}
+.usage-list li {
+  margin-bottom: 5px;
+}
+
+.caption {
+  text-align: center;
+  font-size: 0.9em;
+  color: #777;
+  /* margin-top: 5px; */
+}
+.title {
+  /* font-size: 1.5em; */
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  text-decoration: none;
+}
+
+.date {
+  text-align: center;
+  font-size: 0.8em; 
+  margin-bottom: 10px;
+  color: #344351;
+}
+
+.blog-a {
+  /* text-align: center; */
+  font-size: 1em; 
+  margin-bottom: 10px;
+  color: #344351;
+}
+
+  footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #777;
+  }
+footer a {
+    color: #777;
+    /* text-decoration: none; */
+  }
+
+  .back-to-home {
+    color: #777;
+    text-align: left;
+    font-size: 1.2em;
+    /* text-decoration: none; */
+  }
+/* table{
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+} */
+table{
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+table tr{
+  border-bottom: solid 1px #b6b6b6;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+table tr:hover{
+  background-color: #d0b3ff;
+}
+
+table th,table td{
+  text-align: center;
+  /* width: 25%; */
+  padding: 15px 0;
+}
+
+table .header{
+  background-color: #825cc1;
+  color: #fff;
+  font-weight: bold;
+}
+
+input{
+  font-size: 1.2em;
+  width: 300px;  /* 幅の変更 */
+  height: 30px;  /* 高さの変更 */
+}
+.submit{
+  display: inline-block;
+  padding: 6px 24px;       /* ボタンの内側の余白 */
+  background-color: #3498db; /* 背景色（青） */
+  color: #ffffff;            /* 文字色（白） */
+  font-size: 16px;           /* 文字サイズ */
+  font-weight: bold;         /* 太字 */
+  text-align: center;        /* 文字を中央揃え */
+  border: none;              /* 枠線を消す */
+  border-radius: 4px;        /* 角丸の半径 */
+  cursor: pointer;           /* マウスカーソルを指の形にする */
+  transition: background-color 0.3s ease; /* マウスを乗せた時の変化を滑らかにする */
+}
+
+/* マウスを乗せた（ホバーした）時のデザイン */
+.submit:hover {
+  background-color: #2980b9; /* 少し濃い青色に変化 */
+}
+/* レスポンシブデザイン */
+@media (orientation: portrait) {
+  body {
+    padding: 10px;
+  }
+
+  h1, h2{
+    font-size: 1.5em;
+  }
+
+  .block {
+    padding: 10px;
+  }
+
+  #settings, #playConditions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #settings label, #playConditions label {
+    margin-bottom: 5px;
+  }
+
+  select, #targetRank {
+    width: 100%;
+    font-size: 1.2em;
+  }
+
+  #start {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  #currentRank, #results {
+    text-align: center;
+  }
+  input{
+  font-size: 1.0em;
+  width: 500px;  /* 幅の変更 */
+  height: 60px;  /* 高さの変更 */
+}
+}
+
+@media (orientation: landscape) {
+  #settings, #playConditions {
+    justify-content: flex-start;
+  }
+
+  #currentRank, #results {
+    display: inline-block;
+    width: 48%;
+    vertical-align: top;
+    margin-right: 2%;
+  }
+
+  #results {
+    margin-right: 0;
+  }
+}
+
+@media (orientation: portrait) and (min-width: 900px) {
+  body, #start, #result1, #result2 {
+    font-size: 1.8em;
+  }
+  #uploader {
+    font-size: 1.4em;
+  }
+}

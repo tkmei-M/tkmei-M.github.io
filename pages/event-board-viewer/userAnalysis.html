@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" content="width=device-width, initial-scale=1.0" />
+    <title>プロセカボーダー表</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <a class="back-to-home" href="/">M-san Lab</a>
+  </head>
+  <body>
+    <h1 class="title">プロセカボーダー表 - プレイヤー分析画面</h1>
+    <h2 class="userName" id="userName">ユーザー名</h2>
+    <h3>ひと言</h3>
+    <p class="word" id="word">ひと言</p>
+    <h3>TwitterのID</h3>
+    <a id="twitterId" href="#" target="_blank">Twitter ID</a>
+    <p class="note" id="note">
+      ※プロフィール画面で設定されているIDであり、自己申告であることからこのアカウントは実在しない、あるいは本人のものではない可能性があります。
+    </p>
+    <h3>時間ごとのスコア推移</h3>
+    <div
+      id="chartViewControl"
+      style="
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin: 20px auto;
+        max-width: 900px;
+      "
+    >
+      <label style="cursor: pointer">
+        <input
+          type="radio"
+          name="chartView"
+          value="score"
+          checked
+          style="margin-right: 6px"
+        />
+        スコア
+      </label>
+      <label style="cursor: pointer">
+        <input
+          type="radio"
+          name="chartView"
+          value="diff"
+          style="margin-right: 6px"
+        />
+        スコア差分
+      </label>
+    </div>
+    <div style="max-width: 900px; margin: 20px auto">
+      <canvas id="scoreChart" style="max-height: 400px"></canvas>
+    </div>
+    <h3>テーブル表示</h3>
+    <div
+      id="tableViewControl"
+      style="
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin: 20px auto;
+        max-width: 900px;
+      "
+    >
+      <label style="cursor: pointer">
+        <input
+          type="radio"
+          name="tableView"
+          value="hourly"
+          checked
+          style="margin-right: 6px"
+        />
+        時間帯ごとのスコア変動数
+      </label>
+      <label style="cursor: pointer">
+        <input
+          type="radio"
+          name="tableView"
+          value="diff"
+          style="margin-right: 6px"
+        />
+        1分ごとのスコア差分
+      </label>
+    </div>
+    <div
+      id="hourlyChangeTableContainer"
+      style="margin: 20px auto; overflow-x: auto; max-width: 900px"
+    >
+      <div id="hourlyChangeTableWrapper"></div>
+      <div id="scoreDiffTableWrapper" style="display: none"></div>
+    </div>
+  </body>
+  <footer>
+    <p>&copy; 2026 M-san Lab. All rights reserved.</p>
+    <p>
+      <a href="https://x.com/tkmei_M">Twitter</a>
+    </p>
+    <p>
+      <a href="https://note.com/tkmei_m">note</a>
+    </p>
+    <p><a href="/">TOPに戻る</a></p>
+  </footer>
+  <script src="script_userAnalysis.js"></script>
+</html>

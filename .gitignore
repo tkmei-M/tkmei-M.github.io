@@ -1,0 +1,8 @@
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+
+# 開発中
+mysekai_fixture_talk_checker/
