@@ -196,10 +196,11 @@ async function fetchAndDisplayUserData() {
       setupChartViewToggle(timestamps, scores, rankScores, scoreDiffs);
     }
 
-    // 1時間ごとのスコア変動数を計算して表示
+    // 1時間ごとのイベントPt変動数を計算して表示
     if (data.length > 0) {
       createHourlyChangeTable(data);
       createScoreDifferenceTable(timestampKeys, scores);
+      createScoreDifferenceHourlyTable(timestampKeys, scores);
       setupTableViewToggle();
     }
 
@@ -208,6 +209,36 @@ async function fetchAndDisplayUserData() {
     // console.error("予期しないエラー:", err);
     document.getElementById("userName").textContent = "エラーが発生しました";
   }
+}
+
+function replaceZeroToBefore(data) {
+  //指定した時間までのゼロを手前のデータに置換する
+  // 例: [2000,0,1000,0,0,0,1000] -> [2000,2000,1000,1000,1000,1000,1000]
+  let max_zero_count = 3; // 何個までゼロが連続していてよいか
+  let temp = 0;
+  let zero_count = 0;
+  let j = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === 0 && zero_count <= max_zero_count) {
+      j = 0;
+      while (j <= max_zero_count) {
+        // max_zero_count 以内に1以上が出るかチェック
+        if (i + j < data.length && data[i + j] > 0) {
+          // max_zero_count 以内に1以上が出た場合は置換
+          zero_count++;
+          data[i] = temp;
+          console.log("replaceZeroToBefore: " + i + " -> " + temp);
+          break;
+        }
+        j++;
+      }
+    } else if (data[i] > 0) {
+      zero_count = 0;
+      temp = data[i];
+    }
+  }
+  console.log(data);
+  return data;
 }
 
 function renderScoreChart(
@@ -232,12 +263,12 @@ function renderScoreChart(
 
   if (isDiffView) {
     datasets.push({
-      label: "スコア差分",
-      data: scoreDiffs,
+      label: "イベントPt差分",
+      data: replaceZeroToBefore(scoreDiffs),
       borderColor: "#FF6B9D",
       backgroundColor: "rgba(255, 107, 157, 0.1)",
       borderWidth: 2,
-      fill: false,
+      fill: true,
       tension: 0.4,
       pointBackgroundColor: "#FF6B9D",
       pointBorderColor: "#fff",
@@ -249,7 +280,7 @@ function renderScoreChart(
   } else {
     if (rankScores && rankScores.length > 0) {
       datasets.push({
-        label: "同rankのスコア",
+        label: "同rankのイベントPt",
         data: rankScores,
         borderColor: "#4A90E2",
         backgroundColor: "rgba(74, 144, 226, 0.1)",
@@ -266,7 +297,7 @@ function renderScoreChart(
     }
 
     datasets.push({
-      label: "スコア",
+      label: "イベントPt",
       data: scores,
       borderColor: "#FF6B9D",
       backgroundColor: "rgba(255, 107, 157, 0.1)",
@@ -303,7 +334,9 @@ function renderScoreChart(
         },
         title: {
           display: true,
-          text: isDiffView ? "1分ごとのスコア差分" : "時間ごとのスコア推移",
+          text: isDiffView
+            ? "1分ごとのイベントPt差分"
+            : "時間ごとのイベントPt推移",
           font: {
             size: 14,
           },
@@ -352,7 +385,7 @@ function setupChartViewToggle(timestamps, scores, rankScores, scoreDiffs) {
   updateChart();
 }
 
-// 1時間ごとのスコア変動数を計算して表示
+// 1時間ごとのイベントPt変動数を計算して表示
 function createHourlyChangeTable(data) {
   // データを日付ごと、1時間ごとにグループ化
   const dailyHourlyGroups = {};
@@ -444,13 +477,13 @@ function createHourlyChangeTable(data) {
   }
 }
 
-// 1分ごとのスコア差分を計算して表示
+// 1分ごとのイベントPt差分を計算して表示
 function createScoreDifferenceTable(timestampKeys, scores) {
   let previousScore = null;
   let tableHTML =
     '<table id="scoreDiffTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th style="padding: 8px; text-align: center;">日時</th><th style="padding: 8px; text-align: center;">スコア</th><th style="padding: 8px; text-align: center;">差分</th></tr>';
+    '<tr><th style="padding: 8px; text-align: center;">日時</th><th style="padding: 8px; text-align: center;">イベントPt</th><th style="padding: 8px; text-align: center;">差分</th></tr>';
 
   timestampKeys.forEach((timestamp, index) => {
     const score = scores[index];
@@ -480,11 +513,63 @@ function createScoreDifferenceTable(timestampKeys, scores) {
     wrapper.innerHTML = tableHTML;
   }
 }
+function createScoreDifferenceHourlyTable(Timestamps, scores) {
+  // 毎時0分のイベントPtを比較し、その差分を1時間ごとにテーブル化
+  let tableHTML =
+    '<table id="scoreDiffHourlyTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
+  tableHTML +=
+    '<tr><th style="padding: 8px; text-align: center;">日時</th><th style="padding: 8px; text-align: center;">イベントPt</th><th style="padding: 8px; text-align: center;">差分</th></tr>';
+  // 毎時0分のデータのみをまず抽出
+  const hourlyData = Timestamps.map((timestamp, index) => {
+    const date = new Date(timestamp);
+    if (date.getMinutes() === 0) {
+      return {
+        timestamp,
+        score: scores[index],
+        formattedDate: date.toLocaleString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+      };
+    }
+    return null;
+  }).filter((item) => item !== null);
+  // 0個目のスコアがnullの場合、0に置換
+  if (hourlyData.length > 0 && hourlyData[0].score === null) {
+    hourlyData[0].score = 0;
+  }
+
+  let previousScore = null;
+  hourlyData.forEach((data) => {
+    const { formattedDate, score } = data;
+    const diff =
+      score === null || score === undefined || previousScore === null
+        ? null
+        : score - previousScore;
+    const diffText = diff === null ? "-" : diff > 0 ? `+${diff}` : `${diff}`;
+    tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${score}</td><td style="padding: 8px; text-align: center;">${diffText}</td></tr>`;
+    previousScore = score;
+  });
+
+  tableHTML += "</table>";
+
+  const wrapper = document.getElementById("scoreDiffHourlyTableWrapper");
+  if (wrapper) {
+    wrapper.innerHTML = tableHTML;
+  }
+}
 
 function setupTableViewToggle() {
   const toggleRadios = document.querySelectorAll('input[name="tableView"]');
   const hourlyWrapper = document.getElementById("hourlyChangeTableWrapper");
   const diffWrapper = document.getElementById("scoreDiffTableWrapper");
+  const diffPerHourWrapper = document.getElementById(
+    "scoreDiffHourlyTableWrapper",
+  );
 
   if (!hourlyWrapper || !diffWrapper) {
     return;
@@ -497,9 +582,15 @@ function setupTableViewToggle() {
     if (selectedValue === "diff") {
       hourlyWrapper.style.display = "none";
       diffWrapper.style.display = "block";
+      diffPerHourWrapper.style.display = "none";
+    } else if (selectedValue === "diffPerHour") {
+      hourlyWrapper.style.display = "none";
+      diffWrapper.style.display = "none";
+      diffPerHourWrapper.style.display = "block";
     } else {
       hourlyWrapper.style.display = "block";
       diffWrapper.style.display = "none";
+      diffPerHourWrapper.style.display = "none";
     }
   }
 

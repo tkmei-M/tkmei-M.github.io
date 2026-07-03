@@ -20,13 +20,14 @@
     <p class="note" id="note">
       ※プロフィール画面で設定されているIDであり、自己申告であることからこのアカウントは実在しない、あるいは本人のものではない可能性があります。
     </p>
-    <h3>時間ごとのスコア推移</h3>
+    <h3>時間ごとのイベントPt推移</h3>
     <div
       id="chartViewControl"
       style="
         display: flex;
         gap: 16px;
         align-items: center;
+        text-align: center;
         margin: 20px auto;
         max-width: 900px;
       "
@@ -39,7 +40,7 @@
           checked
           style="margin-right: 6px"
         />
-        スコア
+        <br />イベントPt
       </label>
       <label style="cursor: pointer">
         <input
@@ -48,7 +49,7 @@
           value="diff"
           style="margin-right: 6px"
         />
-        スコア差分
+        <br />イベントPt差分
       </label>
     </div>
     <div style="max-width: 900px; margin: 20px auto">
@@ -63,6 +64,7 @@
         align-items: center;
         margin: 20px auto;
         max-width: 900px;
+        text-align: center;
       "
     >
       <label style="cursor: pointer">
@@ -73,7 +75,7 @@
           checked
           style="margin-right: 6px"
         />
-        時間帯ごとのスコア変動数
+        <br />時間帯ごとのイベントPt変動数
       </label>
       <label style="cursor: pointer">
         <input
@@ -82,7 +84,16 @@
           value="diff"
           style="margin-right: 6px"
         />
-        1分ごとのスコア差分
+        <br />1分ごとのイベントPt差分
+      </label>
+      <label style="cursor: pointer">
+        <input
+          type="radio"
+          name="tableView"
+          value="diffPerHour"
+          style="margin-right: 6px"
+        />
+        <br />1時間ごとのイベントPt差分
       </label>
     </div>
     <div
@@ -91,6 +102,7 @@
     >
       <div id="hourlyChangeTableWrapper"></div>
       <div id="scoreDiffTableWrapper" style="display: none"></div>
+      <div id="scoreDiffHourlyTableWrapper" style="display: none"></div>
     </div>
   </body>
   <footer>

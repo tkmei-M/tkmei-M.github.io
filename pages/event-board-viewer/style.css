@@ -37,7 +37,7 @@ h2 {
 }
 
 #note {
-  font-size: 0.5 rem;
+  font-size: small;
   color: #2c3e50;
 }
 
@@ -225,6 +225,19 @@ table .header{
   font-weight: bold;
 }
 
+/* テキスト選択を禁止するクラス */
+.clickable-row {
+  -webkit-user-select: none;   /* Safari / iOS */
+  user-select: none;           /* 標準 */
+  
+  /* スマホ特有のタップ時の青いハイライトを消す */
+  -webkit-tap-highlight-color: transparent; 
+  
+  /* マウスカーソルを指マークにしてクリック可能であることを示す */
+  cursor: pointer; 
+}
+
+
 input{
   font-size: 1.2em;
   width: 300px;  /* 幅の変更 */
@@ -249,7 +262,7 @@ input{
   background-color: #2980b9; /* 少し濃い青色に変化 */
 }
 /* レスポンシブデザイン */
-@media (orientation: portrait) {
+@media (orientation: portrait) and (max-width: 768px) {
   body {
     padding: 10px;
   }
@@ -289,6 +302,10 @@ input{
   width: 500px;  /* 幅の変更 */
   height: 60px;  /* 高さの変更 */
 }
+  label {
+    transform: scale(0.7);
+    font-size: x-large;
+  }
 }
 
 @media (orientation: landscape) {
@@ -305,14 +322,5 @@ input{
 
   #results {
     margin-right: 0;
-  }
-}
-
-@media (orientation: portrait) and (min-width: 900px) {
-  body, #start, #result1, #result2 {
-    font-size: 1.8em;
-  }
-  #uploader {
-    font-size: 1.4em;
   }
 }

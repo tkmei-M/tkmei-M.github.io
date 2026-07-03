@@ -177,6 +177,8 @@ async function fetchAndDisplayData() {
         String(row.userId),
       )}`;
       const tr = document.createElement("tr");
+      // クラスを付与
+      tr.classList.add("clickable-row");
       displayColumns.forEach((col) => {
         const td = document.createElement("td");
         tr.addEventListener("click", () => {
