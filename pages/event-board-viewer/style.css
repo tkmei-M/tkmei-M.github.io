@@ -324,3 +324,11 @@ input{
     margin-right: 0;
   }
 }
+@media (orientation: portrait) and (min-width: 900px) {
+  body, #start, #result1, #result2 {
+    font-size: 1.8em;
+  }
+  #uploader {
+    font-size: 1.4em;
+  }
+}
