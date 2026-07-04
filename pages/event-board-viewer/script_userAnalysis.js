@@ -1,11 +1,34 @@
 // Supabaseクライアントは auth.js で初期化されます
 const client = window.supabaseClient;
 
+// events.jsonとgameCharacters.jsonをキャッシュ
+let eventsCache = null;
+let gameCharactersCache = null;
+
 // URLパラメータからuserIdを取得（String型として保証）
 function getUserIdFromURL() {
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
   return userId ? String(userId) : null;
+}
+
+// events.jsonとgameCharacters.jsonを取得
+async function loadStaticData() {
+  try {
+    if (!eventsCache) {
+      // const eventsResponse = await fetch("events.json");
+      const eventsResponse = await fetch(
+        "https://sekai-world.github.io/sekai-master-db-diff/events.json",
+      );
+      eventsCache = await eventsResponse.json();
+    }
+    if (!gameCharactersCache) {
+      const charactersResponse = await fetch("gameCharacters.json");
+      gameCharactersCache = await charactersResponse.json();
+    }
+  } catch (err) {
+    console.error("Failed to load static data:", err);
+  }
 }
 
 function floorTimestampToMinute(value) {
@@ -203,6 +226,10 @@ async function fetchAndDisplayUserData() {
       createScoreDifferenceHourlyTable(timestampKeys, scores);
       setupTableViewToggle();
     }
+
+    // イベント履歴を取得して表示
+    await loadStaticData();
+    await fetchAndDisplayEventHistory(userId);
 
     // console.log("ユーザーデータ取得成功");
   } catch (err) {
@@ -563,12 +590,80 @@ function createScoreDifferenceHourlyTable(Timestamps, scores) {
   }
 }
 
+// イベント履歴をAPIから取得
+async function fetchAndDisplayEventHistory(userId) {
+  try {
+    const url = `https://script.google.com/macros/s/AKfycbzwrKsv4LfbxXFBeyfk9SRgxsj-7Bm3O46C1ZT1Hcx8psDzlHcAk3ve9ARA_fssmeus/exec?userId=${userId}`;
+    const response = await fetch(url);
+    const historyData = await response.json();
+
+    if (Array.isArray(historyData) && historyData.length > 0) {
+      createEventHistoryTable(historyData);
+    }
+  } catch (err) {
+    console.error("Failed to fetch event history:", err);
+  }
+}
+
+// イベント履歴テーブルを生成
+function createEventHistoryTable(historyData) {
+  let tableHTML =
+    '<table id="eventHistoryTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
+  tableHTML +=
+    '<tr><th style="padding: 8px; text-align: center;">イベント名</th><th style="padding: 8px; text-align: center;">詳細名</th><th style="padding: 8px; text-align: center;">ランク</th></tr>';
+
+  historyData.forEach((record) => {
+    const eventId = parseInt(record.eventId);
+    let eventName = "イベント名不明";
+
+    // events.jsonからイベント情報を取得
+    if (eventsCache) {
+      const event = eventsCache.find((e) => e.id === eventId);
+      if (event) {
+        eventName = event.name;
+        // world_bloomの場合、チャプター情報を追加
+        if (event.eventType === "world_bloom") {
+          if (
+            record.chapterCharacterId === "" ||
+            record.chapterCharacterId === null
+          ) {
+            eventName += "【総合】";
+          } else {
+            const chapterId = parseInt(record.chapterCharacterId);
+            if (gameCharactersCache) {
+              const character = gameCharactersCache.find(
+                (c) => c.id === chapterId,
+              );
+              if (character) {
+                eventName += `【${character.name}チャプター】`;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const apiName = record.name || "-";
+    const rank = record.rank || "-";
+    tableHTML += `<tr><td style="padding: 8px; text-align: left;">${eventName}</td><td style="padding: 8px; text-align: left;">${apiName}</td><td style="padding: 8px; text-align: center;">${rank}</td></tr>`;
+  });
+
+  tableHTML += "</table>";
+  const wrapper = document.getElementById("eventHistoryTableWrapper");
+  if (wrapper) {
+    wrapper.innerHTML = tableHTML;
+  }
+}
+
 function setupTableViewToggle() {
   const toggleRadios = document.querySelectorAll('input[name="tableView"]');
   const hourlyWrapper = document.getElementById("hourlyChangeTableWrapper");
   const diffWrapper = document.getElementById("scoreDiffTableWrapper");
   const diffPerHourWrapper = document.getElementById(
     "scoreDiffHourlyTableWrapper",
+  );
+  const eventHistoryWrapper = document.getElementById(
+    "eventHistoryTableWrapper",
   );
 
   if (!hourlyWrapper || !diffWrapper) {
@@ -583,14 +678,22 @@ function setupTableViewToggle() {
       hourlyWrapper.style.display = "none";
       diffWrapper.style.display = "block";
       diffPerHourWrapper.style.display = "none";
+      eventHistoryWrapper.style.display = "none";
     } else if (selectedValue === "diffPerHour") {
       hourlyWrapper.style.display = "none";
       diffWrapper.style.display = "none";
       diffPerHourWrapper.style.display = "block";
+      eventHistoryWrapper.style.display = "none";
+    } else if (selectedValue === "eventHistory") {
+      hourlyWrapper.style.display = "none";
+      diffWrapper.style.display = "none";
+      diffPerHourWrapper.style.display = "none";
+      eventHistoryWrapper.style.display = "block";
     } else {
       hourlyWrapper.style.display = "block";
       diffWrapper.style.display = "none";
       diffPerHourWrapper.style.display = "none";
+      eventHistoryWrapper.style.display = "none";
     }
   }
 
