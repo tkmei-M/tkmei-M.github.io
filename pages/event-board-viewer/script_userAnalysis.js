@@ -54,6 +54,57 @@ function buildMinuteTimestamps(startMs, endMs) {
   return timestamps;
 }
 
+function findCurrentEventTimeRange(events, nowTimestamp) {
+  if (!Array.isArray(events) || events.length === 0) {
+    return null;
+  }
+
+  const now = nowTimestamp ?? Date.now();
+  let matchedEvent = null;
+
+  events.forEach((event) => {
+    const startAt = Number(event?.startAt);
+    const closedAt = Number(event?.closedAt);
+
+    if (!Number.isFinite(startAt) || !Number.isFinite(closedAt)) {
+      return;
+    }
+
+    if (startAt <= now && now <= closedAt) {
+      if (!matchedEvent || startAt > matchedEvent.startAt) {
+        matchedEvent = event;
+      }
+    }
+  });
+
+  if (!matchedEvent) {
+    return null;
+  }
+
+  const aggregateAt = Number(matchedEvent.aggregateAt);
+  const endTimestamp = Number.isFinite(aggregateAt)
+    ? getMinuteTimestamp(aggregateAt)
+    : getMinuteTimestamp(Number(matchedEvent.closedAt));
+
+  return {
+    startTimestamp: getMinuteTimestamp(Number(matchedEvent.startAt)),
+    endTimestamp,
+  };
+}
+
+function getChartEndTimestamp(eventEndTimestamp, nowTimestamp, graphMethod, viewType) {
+  if (graphMethod === "before" || viewType === "diff") {
+    return nowTimestamp;
+  }
+  return eventEndTimestamp ? Math.max(nowTimestamp, eventEndTimestamp) : nowTimestamp;
+}
+
+function buildSeriesFromMap(timestampKeys, valueMap) {
+  return timestampKeys.map((ts) =>
+    valueMap.has(ts) ? valueMap.get(ts) : null,
+  );
+}
+
 function computeScoreDiffs(scores) {
   const diffs = [];
   let previousScore = null;
@@ -77,6 +128,106 @@ function computeScoreDiffs(scores) {
   return diffs;
 }
 
+function getSelectedGraphMethod() {
+  return (
+    document.getElementById("graph-setting")?.value || "before"
+  );
+}
+
+function calculateLeastSquaresPrediction(timestampKeys, scores, nowTimestamp, tableLength) {
+  console.log("最小二乗法に基づく予測");
+  // y軸のデータ（スコア）の数だけ，連番の配列（x軸のデータ）を作成する
+  const xValues = scores.map((_, index) => index);
+  // 最小二乗法の計算を行う
+  const n = scores.length;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+
+  xValues.forEach((x, i) => {
+    const y = scores[i];
+    if (y === null || y === undefined) {
+      return;
+    }
+    sumX += x;
+    sumY += y;
+    sumXY += x * y;
+    sumXX += x * x;
+  });
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) {
+    return timestampKeys.map(() => null);
+  }
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / n;
+  // 求まった傾きと切片をもとに，グラフにプロットする直線のデータを作成する
+  const predictedScores = [];
+  for (let i = 0; i < tableLength; i++) {
+    const predictedScore = slope * i + intercept;
+    predictedScores.push(Math.max(0, Math.round(predictedScore)));
+  }
+  return predictedScores;
+}
+
+function calculateLastHourSpeedPrediction(timestampKeys, scores, nowTimestamp, tableLength) {
+  console.log("直近1時間の時速に基づく予測");
+  // 最終データの60コ前（1時間前）のデータを取得
+  const lastIndex = scores.length - 1;
+  const oneHourAgoIndex = Math.max(0, lastIndex - 60);
+  let lastScore = scores[lastIndex];
+  const oneHourAgoScore = scores[oneHourAgoIndex];
+  // 1時間前のデータが存在しない場合は予測できない
+  if (oneHourAgoScore === null || oneHourAgoScore === undefined) {
+    return timestampKeys.map(() => null);
+  }
+  // 1時間のスコア変化量を計算
+  const scoreChange = lastScore - oneHourAgoScore;
+  const scoreChangePerMinute = scoreChange / 60; // 1分あたりのスコア変化量
+  // scoreChangeを使って，今後のスコアを予測する
+  const speed = scoreChange; // 1時間あたりのスコア変化量
+  let predictedScores = scores.slice(); // 既存のスコアをコピー
+  // 59コnullを入れて，次に予測値を入れる（これで1時間単位）←これをtableLengthの長さと合うまで繰り返す，最後の1時間はscoreChangePerMinuteを使って予測する
+  while (predictedScores.length + 60 < tableLength) {
+    //59コnullを入れる
+    for (let i = 0; i < 59; i++) {
+      predictedScores.push(null);
+    }
+    // 1時間後の予測値を入れる
+    const nextScore = lastScore + speed;
+    predictedScores.push(Math.max(0, Math.round(nextScore)));
+    lastScore = nextScore;
+  }
+  //最後は1分ごとの予測値を使って，残りの分を埋める
+  while (predictedScores.length < tableLength) {
+    const nextScore = lastScore + scoreChangePerMinute;
+    predictedScores.push(Math.max(0, Math.round(nextScore)));
+    lastScore = nextScore;
+  }
+  return predictedScores;
+}
+
+function buildPredictionDataset(timestampKeys, scores, nowTimestamp, graphMethod) {
+  const tableLength = scores.length
+  //現在のスコアより後のデータは切り捨ててからそれぞれの予測関数に渡す
+  const maxscoreIndex = scores.reduce((maxIndex, score, index) => {
+    if (score !== null && score !== undefined) {
+      return index;
+    }
+    return maxIndex;
+  }, -1);
+  // スコアは減らないので，最大スコアのインデックスまでのデータを使用すればよい
+  const filteredTimestampKeys = timestampKeys.slice(0, maxscoreIndex + 1);
+  const filteredScores = scores.slice(0, maxscoreIndex + 1);
+  if (graphMethod === "least-squares") {
+    return calculateLeastSquaresPrediction(filteredTimestampKeys, filteredScores, nowTimestamp, tableLength);
+  }
+  if (graphMethod === "last-an-hour-speed") {
+    return calculateLastHourSpeedPrediction(filteredTimestampKeys, filteredScores, nowTimestamp, tableLength);
+  }
+  return timestampKeys.map(() => null);
+}
+
 // ユーザーデータを取得して表示
 async function fetchAndDisplayUserData() {
   const session = await requireAuth();
@@ -94,6 +245,8 @@ async function fetchAndDisplayUserData() {
         "ユーザーが見つかりません";
       return;
     }
+
+    await loadStaticData();
 
     // eventboard_archiveテーブルからデータを取得（userIdはString型）
     const { data, error } = await client
@@ -186,9 +339,16 @@ async function fetchAndDisplayUserData() {
     const nowTimestamp = getMinuteTimestamp(Date.now());
     const playerStartTimestamp =
       playerPoints.length > 0 ? playerPoints[0].timestamp : null;
-    const startTimestamp =
-      rankOneStartTimestamp ?? playerStartTimestamp ?? nowTimestamp;
-    const endTimestamp = Math.max(nowTimestamp, startTimestamp);
+    const currentEventTimeRange = findCurrentEventTimeRange(
+      eventsCache,
+      nowTimestamp,
+    );
+    const startTimestamp = currentEventTimeRange
+      ? currentEventTimeRange.startTimestamp
+      : rankOneStartTimestamp ?? playerStartTimestamp ?? nowTimestamp;
+    const endTimestamp = currentEventTimeRange
+      ? Math.max(nowTimestamp, currentEventTimeRange.endTimestamp)
+      : Math.max(nowTimestamp, startTimestamp);
 
     const timestampKeys = buildMinuteTimestamps(startTimestamp, endTimestamp);
     const timestamps = timestampKeys.map((ts) =>
@@ -216,7 +376,13 @@ async function fetchAndDisplayUserData() {
 
     // グラフを作成
     if (timestamps.length > 0) {
-      setupChartViewToggle(timestamps, scores, rankScores, scoreDiffs);
+      setupChartControls(
+        startTimestamp,
+        currentEventTimeRange?.endTimestamp,
+        nowTimestamp,
+        playerScoreMap,
+        rankPointsMap,
+      );
     }
 
     // 1時間ごとのイベントPt変動数を計算して表示
@@ -228,7 +394,6 @@ async function fetchAndDisplayUserData() {
     }
 
     // イベント履歴を取得して表示
-    await loadStaticData();
     await fetchAndDisplayEventHistory(userId);
 
     // console.log("ユーザーデータ取得成功");
@@ -254,7 +419,6 @@ function replaceZeroToBefore(data) {
           // max_zero_count 以内に1以上が出た場合は置換
           zero_count++;
           data[i] = temp;
-          console.log("replaceZeroToBefore: " + i + " -> " + temp);
           break;
         }
         j++;
@@ -264,7 +428,6 @@ function replaceZeroToBefore(data) {
       temp = data[i];
     }
   }
-  console.log(data);
   return data;
 }
 
@@ -273,6 +436,7 @@ function renderScoreChart(
   scores,
   rankScores,
   scoreDiffs,
+  predictedScores,
   viewType,
 ) {
   const canvas = document.getElementById("scoreChart");
@@ -338,6 +502,25 @@ function renderScoreChart(
       pointHoverRadius: 6,
       spanGaps: true,
     });
+
+    if (predictedScores && predictedScores.some((value) => value !== null)) {
+      datasets.push({
+        label: "予測イベントPt",
+        data: predictedScores,
+        borderColor: "#00B894",
+        backgroundColor: "rgba(0, 184, 148, 0.08)",
+        borderWidth: 2,
+        borderDash: [6, 4],
+        fill: false,
+        tension: 0.4,
+        pointBackgroundColor: "#00B894",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        spanGaps: true,
+      });
+    }
   }
 
   scoreChartInstance = new Chart(ctx, {
@@ -395,19 +578,67 @@ function renderScoreChart(
   });
 }
 
-function setupChartViewToggle(timestamps, scores, rankScores, scoreDiffs) {
+function setupChartControls(
+  startTimestamp,
+  eventEndTimestamp,
+  nowTimestamp,
+  playerScoreMap,
+  rankPointsMap,
+  initialLabels,
+  scoreDiffs,
+) {
   const chartRadios = document.querySelectorAll('input[name="chartView"]');
+  const graphSetting = document.getElementById("graph-setting");
 
   function updateChart() {
     const viewType =
       document.querySelector('input[name="chartView"]:checked')?.value ||
       "score";
-    renderScoreChart(timestamps, scores, rankScores, scoreDiffs, viewType);
+    const graphMethod = getSelectedGraphMethod();
+    const endTimestamp = getChartEndTimestamp(
+      eventEndTimestamp,
+      nowTimestamp,
+      graphMethod,
+      viewType,
+    );
+    const timestampKeys = buildMinuteTimestamps(startTimestamp, endTimestamp);
+    const timestamps = timestampKeys.map((ts) =>
+      new Date(ts).toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+    );
+    const scores = buildSeriesFromMap(timestampKeys, playerScoreMap);
+    const rankScores = buildSeriesFromMap(timestampKeys, rankPointsMap);
+    const scoreDiffsForView = computeScoreDiffs(scores);
+    const predictedScores = buildPredictionDataset(
+      timestampKeys,
+      scores,
+      nowTimestamp,
+      graphMethod,
+    );
+
+    renderScoreChart(
+      timestamps,
+      scores,
+      rankScores,
+      scoreDiffsForView,
+      predictedScores,
+      viewType,
+    );
   }
 
   chartRadios.forEach((radio) => {
     radio.addEventListener("change", updateChart);
   });
+
+  if (graphSetting) {
+    graphSetting.addEventListener("change", updateChart);
+  }
 
   updateChart();
 }
@@ -510,7 +741,7 @@ function createScoreDifferenceTable(timestampKeys, scores) {
   let tableHTML =
     '<table id="scoreDiffTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th style="padding: 8px; text-align: center;">日時</th><th style="padding: 8px; text-align: center;">イベントPt</th><th style="padding: 8px; text-align: center;">差分</th></tr>';
+    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th></tr>';
 
   timestampKeys.forEach((timestamp, index) => {
     const score = scores[index];
@@ -545,7 +776,7 @@ function createScoreDifferenceHourlyTable(Timestamps, scores) {
   let tableHTML =
     '<table id="scoreDiffHourlyTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th style="padding: 8px; text-align: center;">日時</th><th style="padding: 8px; text-align: center;">イベントPt</th><th style="padding: 8px; text-align: center;">差分</th></tr>';
+    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th></tr>';
   // 毎時0分のデータのみをまず抽出
   const hourlyData = Timestamps.map((timestamp, index) => {
     const date = new Date(timestamp);
@@ -610,7 +841,7 @@ function createEventHistoryTable(historyData) {
   let tableHTML =
     '<table id="eventHistoryTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th style="padding: 8px; text-align: center;">イベント名</th><th style="padding: 8px; text-align: center;">詳細名</th><th style="padding: 8px; text-align: center;">ランク</th></tr>';
+    '<tr class="header"><th style="padding: 8px; text-align: center;">イベント名</th><th style="padding: 8px; text-align: center;">詳細名</th><th style="padding: 8px; text-align: center;">ランク</th></tr>';
 
   historyData.forEach((record) => {
     const eventId = parseInt(record.eventId);
