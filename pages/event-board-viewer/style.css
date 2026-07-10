@@ -344,4 +344,7 @@ input{
   #uploader {
     font-size: 1.4em;
   }
+  #graph-setting {
+  font-size: 1.5em;
+}
 }
