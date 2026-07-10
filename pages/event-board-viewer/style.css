@@ -35,6 +35,17 @@ h2 {
   margin-bottom: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+code{
+  font-size: 120%;
+  background-color: #ffbb84;
+  color: #d62000;
+  margin: 5px;
+  padding-top: 0.2em;
+  padding-right: 0.4em;
+  padding-bottom: 0.2em;
+  padding-left: 0.4em;
+  border-radius: 4px;
+}
 
 #note {
   font-size: small;
@@ -206,10 +217,9 @@ table{
 table tr{
   border-bottom: solid 1px #b6b6b6;
   background-color: #fff;
-  cursor: pointer;
 }
 
-table tr:hover{
+.clickable-row:hover{
   background-color: #d0b3ff;
 }
 
@@ -306,6 +316,9 @@ input{
     transform: scale(0.7);
     font-size: x-large;
   }
+  #graph-setting {
+  font-size: 1.5em;
+}
 }
 
 @media (orientation: landscape) {
