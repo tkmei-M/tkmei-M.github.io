@@ -316,9 +316,6 @@ input{
     transform: scale(0.7);
     font-size: x-large;
   }
-  #graph-setting {
-  font-size: 1.5em;
-}
 }
 
 @media (orientation: landscape) {

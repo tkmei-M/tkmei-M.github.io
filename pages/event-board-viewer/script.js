@@ -4,6 +4,17 @@ const client = window.supabaseClient;
 // テーブル表示時に除外するカラム
 const EXCLUDE_COLUMNS = ["id", "TimeStamp", "userId", "word", "twitterId"];
 
+// タグ名から表示用のテキストへ変換するマッピング
+const TAG_MAPPING = [
+  { tagName: "mawashi", displayTag: "回し" },
+  { tagName: "trade", displayTag: "買い垢" },
+  { tagName: "fusei", displayTag: "不正周回" },
+];
+const TAG_DISPLAY_MAP = TAG_MAPPING.reduce((m, o) => {
+  m[o.tagName] = o.displayTag;
+  return m;
+}, {});
+
 // データ取得関数
 async function fetchAndDisplayData() {
   const session = await requireAuth();
@@ -170,6 +181,12 @@ async function fetchAndDisplayData() {
     });
     table.appendChild(headerRow);
 
+    // ブロックリストを取得
+    const blockListMap = await fetchBlockList().catch((e) => {
+      console.log("fetchBlockList failed:", e);
+      return {};
+    });
+
     // データ行を作成
     data.forEach((row) => {
       //各行に応じたユーザ分析ページへのURLを生成
@@ -184,7 +201,26 @@ async function fetchAndDisplayData() {
         tr.addEventListener("click", () => {
           window.location.href = userAnalyzerUrl;
         });
-        const value = row[col];
+        let value = row[col];
+        // ユーザー名列ならブロックリストのタグを名前の後ろに追記する
+        if (col === "name") {
+          const tags = blockListMap[String(row.userId)];
+          if (Array.isArray(tags) && tags.length > 0) {
+            const mapped = tags.map((t) =>
+              TAG_DISPLAY_MAP[t] ? TAG_DISPLAY_MAP[t] : t,
+            );
+            const displayName =
+              value !== null && value !== undefined ? value : "";
+            td.textContent = displayName;
+            mapped.forEach((displayTag) => {
+              const codeEl = document.createElement("code");
+              codeEl.textContent = displayTag;
+              td.appendChild(codeEl);
+            });
+            tr.appendChild(td);
+            return;
+          }
+        }
         td.textContent = value !== null && value !== undefined ? value : "";
         tr.appendChild(td);
       });
@@ -199,5 +235,28 @@ async function fetchAndDisplayData() {
   }
 }
 
+// 指定URLからブロックリストを取得し、userId -> tags のマップを返す
+async function fetchBlockList() {
+  const url =
+    "https://script.google.com/macros/s/AKfycbzDZIgCL3qSmiOOPVE6ioTDMRgWVI4kmvpKfNmoTa9bNpPSnJZrV4Q4-t3oL7Bj9g0kzg/exec";
+  try {
+    const target = url;
+    const response = await fetch(target);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const list = await response.json();
+    const map = {};
+    if (Array.isArray(list)) {
+      list.forEach((item) => {
+        if (item && item.userId) map[String(item.userId)] = item.tags || [];
+      });
+    }
+    return map;
+  } catch (err) {
+    console.log("fetchBlockList error:", err);
+    return {};
+  }
+}
 // ページ読み込み時にデータを取得
 document.addEventListener("DOMContentLoaded", fetchAndDisplayData);
