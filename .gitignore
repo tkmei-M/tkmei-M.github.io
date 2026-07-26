@@ -5,8 +5,10 @@
 .DS_Store
 
 # 開発中
-mysekai_fixture_talk_checker/
+pages/mysekai_fixture_talk_checker/
+pages/mysekai_Phenomena_Collection
 
 # ローカル調整用のデータ
 pages/event-board-viewer/events.json
 pages/test/
+pages/event-board-viewer/chapter/worldBlooms.json
