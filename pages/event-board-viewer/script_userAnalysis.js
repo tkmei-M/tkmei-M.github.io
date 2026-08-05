@@ -92,11 +92,18 @@ function findCurrentEventTimeRange(events, nowTimestamp) {
   };
 }
 
-function getChartEndTimestamp(eventEndTimestamp, nowTimestamp, graphMethod, viewType) {
+function getChartEndTimestamp(
+  eventEndTimestamp,
+  nowTimestamp,
+  graphMethod,
+  viewType,
+) {
   if (graphMethod === "before" || viewType === "diff") {
     return nowTimestamp;
   }
-  return eventEndTimestamp ? Math.max(nowTimestamp, eventEndTimestamp) : nowTimestamp;
+  return eventEndTimestamp
+    ? Math.max(nowTimestamp, eventEndTimestamp)
+    : nowTimestamp;
 }
 
 function buildSeriesFromMap(timestampKeys, valueMap) {
@@ -129,12 +136,15 @@ function computeScoreDiffs(scores) {
 }
 
 function getSelectedGraphMethod() {
-  return (
-    document.getElementById("graph-setting")?.value || "before"
-  );
+  return document.getElementById("graph-setting")?.value || "before";
 }
 
-function calculateLeastSquaresPrediction(timestampKeys, scores, nowTimestamp, tableLength) {
+function calculateLeastSquaresPrediction(
+  timestampKeys,
+  scores,
+  nowTimestamp,
+  tableLength,
+) {
   console.log("最小二乗法に基づく予測");
   // y軸のデータ（スコア）の数だけ，連番の配列（x軸のデータ）を作成する
   const xValues = scores.map((_, index) => index);
@@ -170,7 +180,12 @@ function calculateLeastSquaresPrediction(timestampKeys, scores, nowTimestamp, ta
   return predictedScores;
 }
 
-function calculateLastHourSpeedPrediction(timestampKeys, scores, nowTimestamp, tableLength) {
+function calculateLastHourSpeedPrediction(
+  timestampKeys,
+  scores,
+  nowTimestamp,
+  tableLength,
+) {
   console.log("直近1時間の時速に基づく予測");
   // 最終データの60コ前（1時間前）のデータを取得
   const lastIndex = scores.length - 1;
@@ -207,8 +222,13 @@ function calculateLastHourSpeedPrediction(timestampKeys, scores, nowTimestamp, t
   return predictedScores;
 }
 
-function buildPredictionDataset(timestampKeys, scores, nowTimestamp, graphMethod) {
-  const tableLength = scores.length
+function buildPredictionDataset(
+  timestampKeys,
+  scores,
+  nowTimestamp,
+  graphMethod,
+) {
+  const tableLength = scores.length;
   //現在のスコアより後のデータは切り捨ててからそれぞれの予測関数に渡す
   const maxscoreIndex = scores.reduce((maxIndex, score, index) => {
     if (score !== null && score !== undefined) {
@@ -220,10 +240,20 @@ function buildPredictionDataset(timestampKeys, scores, nowTimestamp, graphMethod
   const filteredTimestampKeys = timestampKeys.slice(0, maxscoreIndex + 1);
   const filteredScores = scores.slice(0, maxscoreIndex + 1);
   if (graphMethod === "least-squares") {
-    return calculateLeastSquaresPrediction(filteredTimestampKeys, filteredScores, nowTimestamp, tableLength);
+    return calculateLeastSquaresPrediction(
+      filteredTimestampKeys,
+      filteredScores,
+      nowTimestamp,
+      tableLength,
+    );
   }
   if (graphMethod === "last-an-hour-speed") {
-    return calculateLastHourSpeedPrediction(filteredTimestampKeys, filteredScores, nowTimestamp, tableLength);
+    return calculateLastHourSpeedPrediction(
+      filteredTimestampKeys,
+      filteredScores,
+      nowTimestamp,
+      tableLength,
+    );
   }
   return timestampKeys.map(() => null);
 }
@@ -345,7 +375,7 @@ async function fetchAndDisplayUserData() {
     );
     const startTimestamp = currentEventTimeRange
       ? currentEventTimeRange.startTimestamp
-      : rankOneStartTimestamp ?? playerStartTimestamp ?? nowTimestamp;
+      : (rankOneStartTimestamp ?? playerStartTimestamp ?? nowTimestamp);
     const endTimestamp = currentEventTimeRange
       ? Math.max(nowTimestamp, currentEventTimeRange.endTimestamp)
       : Math.max(nowTimestamp, startTimestamp);
@@ -567,10 +597,17 @@ function renderScoreChart(
             color: "#666",
             maxRotation: 45,
             minRotation: 0,
-            display: false,
+            // 毎時0分のみで軸を表示
+            // callback: function (value, index, ticks) {
+            //   const date = new Date(value);
+            //   console.log(date.toLocaleTimeString("ja-JP"));
+            //   return date.getMinutes() === 0
+            //     ? date.toLocaleTimeString("ja-JP")
+            //     : null;
+            // },
           },
           grid: {
-            display: false,
+            color: "rgba(0, 0, 0, 0.1)",
           },
         },
       },

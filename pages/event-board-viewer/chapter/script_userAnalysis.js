@@ -665,7 +665,7 @@ function renderScoreChart(
             display: false,
           },
           grid: {
-            display: false,
+            color: "rgba(0, 0, 0, 0.1)",
           },
         },
       },
