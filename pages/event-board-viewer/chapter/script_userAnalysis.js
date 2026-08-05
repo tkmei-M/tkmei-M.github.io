@@ -870,7 +870,7 @@ function createScoreDifferenceTable(
       score === null || score === undefined || previousScore === null
         ? null
         : score - previousScore;
-    const diffText = diff === null ? "-" : diff > 0 ? `+${diff}` : `${diff}`;
+    const diffText = diff === null ? "-" : diff > 0 ? `${diff}` : `${diff}`;
     const scoreText = score === null || score === undefined ? "-" : score;
     const formattedDate = new Date(timestamp).toLocaleString("ja-JP", {
       year: "numeric",
@@ -894,7 +894,7 @@ function createScoreDifferenceTable(
           ? null
           : rankScore - previousRankScores[seriesIndex];
       const rankDiffText =
-        rankDiff === null ? "-" : rankDiff > 0 ? `+${rankDiff}` : `${rankDiff}`;
+        rankDiff === null ? "-" : rankDiff > 0 ? `${rankDiff}` : `${rankDiff}`;
       tableHTML += `<td style="padding: 8px; text-align: center;">${rankScoreText}</td><td style="padding: 8px; text-align: center;">${rankDiffText}</td>`;
       previousRankScores[seriesIndex] =
         rankScore === null || rankScore === undefined ? null : rankScore;
@@ -969,7 +969,7 @@ function createScoreDifferenceHourlyTable(
       score === null || score === undefined || previousScore === null
         ? null
         : score - previousScore;
-    const diffText = diff === null ? "-" : diff > 0 ? `+${diff}` : `${diff}`;
+    const diffText = diff === null ? "-" : diff > 0 ? `${diff}` : `${diff}`;
     tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${score}</td><td style="padding: 8px; text-align: center;">${diffText}</td>`;
 
     rankSeriesData.forEach(({ values }, seriesIndex) => {
@@ -983,7 +983,7 @@ function createScoreDifferenceHourlyTable(
           ? null
           : rankScore - previousRankScores[seriesIndex];
       const rankDiffText =
-        rankDiff === null ? "-" : rankDiff > 0 ? `+${rankDiff}` : `${rankDiff}`;
+        rankDiff === null ? "-" : rankDiff > 0 ? `${rankDiff}` : `${rankDiff}`;
       tableHTML += `<td style="padding: 8px; text-align: center;">${rankScoreText}</td><td style="padding: 8px; text-align: center;">${rankDiffText}</td>`;
       previousRankScores[seriesIndex] =
         rankScore === null || rankScore === undefined ? null : rankScore;
@@ -1114,6 +1114,43 @@ function setupTableViewToggle() {
 
   updateView();
 }
+async function copytableContents() {
+  const currenttable = document.querySelector('input[name="tableView"]:checked')?.value;
+  let tableId = "";
+  switch (currenttable) {
+    case "diff":
+      tableId = "scoreDiffTableWrapper";
+      break;
+    case "diffPerHour":
+      tableId = "scoreDiffHourlyTableWrapper";
+      break;
+    case "eventHistory":
+      tableId = "eventHistoryTableWrapper";
+      break;
+    default:
+      tableId = "hourlyChangeTableWrapper";
+  }
+  const table = document.getElementById(tableId);
+  if (table) {
+    // ここにテーブル内容をコピーするロジックを追加(セルはタブ区切りで)
+    const range = document.createRange();
+    range.selectNode(table);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        alert("テーブル内容をコピーしました");
+      } else {
+        alert("コピーに失敗しました");
+      }
+    } catch (err) {
+      alert("コピーに失敗しました");
+    }
+  }
+}
 
 // ページ読み込み時にデータを取得
 document.addEventListener("DOMContentLoaded", fetchAndDisplayUserData);
@@ -1122,3 +1159,6 @@ startBtn.addEventListener("click", () => {
   // グラフの再プロット処理を追々追加する
   fetchAndDisplayUserData();
 });
+
+// コピー機能の設定
+document.getElementById("copy-btn").addEventListener("click", copytableContents);

@@ -253,7 +253,7 @@ input{
   width: 300px;  /* 幅の変更 */
   height: 30px;  /* 高さの変更 */
 }
-.submit{
+#copy-btn{
   display: inline-block;
   padding: 6px 24px;       /* ボタンの内側の余白 */
   background-color: #3498db; /* 背景色（青） */
@@ -268,7 +268,7 @@ input{
 }
 
 /* マウスを乗せた（ホバーした）時のデザイン */
-.submit:hover {
+#copy-btn:hover {
   background-color: #2980b9; /* 少し濃い青色に変化 */
 }
 #available-chapters {
