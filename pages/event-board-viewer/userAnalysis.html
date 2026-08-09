@@ -21,12 +21,21 @@
       ※プロフィール画面で設定されているIDであり、自己申告であることからこのアカウントは実在しない、あるいは本人のものではない可能性があります。
     </p>
     <h3>時間ごとのイベントPt推移</h3>
-    <label for="graph-setting">グラフの表示方法</label>
-    <select name="graph-method" id="graph-setting">
-      <option value="before">イベント開始から現在の時刻までを表示</option>
-      <option value="least-squares">線形近似による予測</option>
-      <option value="last-an-hour-speed">直近1時間の時速で稼働し続けた場合の予測</option>
-    </select>
+    <div>
+      <label for="graph-setting">グラフの表示方法</label>
+      <select name="graph-method" id="graph-setting">
+        <option value="before">イベント開始から現在の時刻までを表示</option>
+        <option value="least-squares">線形近似による予測</option>
+        <option value="last-an-hour-speed">
+          直近1時間の時速で稼働し続けた場合の予測
+        </option>
+      </select>
+    </div>
+    <div>
+      <label for="target-border">別途プロットするボーターのデータ</label>
+      <input type="number" id="target-border" min="1" max="10000" value="100" />
+      <button id="start">データを再取得</button>
+    </div>
     <div
       id="chartViewControl"
       style="

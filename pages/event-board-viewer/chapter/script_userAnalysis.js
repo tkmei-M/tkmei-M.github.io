@@ -1,3 +1,4 @@
+// チャプターボードのユーザー情報取得
 // Supabaseクライアントは auth.js で初期化されます
 const client = window.supabaseClient;
 
@@ -1115,7 +1116,9 @@ function setupTableViewToggle() {
   updateView();
 }
 async function copytableContents() {
-  const currenttable = document.querySelector('input[name="tableView"]:checked')?.value;
+  const currenttable = document.querySelector(
+    'input[name="tableView"]:checked',
+  )?.value;
   let tableId = "";
   switch (currenttable) {
     case "diff":
@@ -1161,4 +1164,6 @@ startBtn.addEventListener("click", () => {
 });
 
 // コピー機能の設定
-document.getElementById("copy-btn").addEventListener("click", copytableContents);
+document
+  .getElementById("copy-btn")
+  .addEventListener("click", copytableContents);

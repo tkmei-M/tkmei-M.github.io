@@ -5,6 +5,9 @@ const client = window.supabaseClient;
 let eventsCache = null;
 let gameCharactersCache = null;
 
+const startBtn = document.getElementById("start");
+const anotherPlotRank = document.getElementById("target-border");
+
 // URLパラメータからuserIdを取得（String型として保証）
 function getUserIdFromURL() {
   const params = new URLSearchParams(window.location.search);
@@ -109,6 +112,17 @@ function getChartEndTimestamp(
 function buildSeriesFromMap(timestampKeys, valueMap) {
   return timestampKeys.map((ts) =>
     valueMap.has(ts) ? valueMap.get(ts) : null,
+  );
+}
+
+function buildRankSeriesFromMap(timestampKeys, rankPointsByRank) {
+  return Array.from(rankPointsByRank.entries()).map(
+    ([rank, rankPointsMap]) => ({
+      rank,
+      values: timestampKeys.map((ts) =>
+        rankPointsMap.has(ts) ? rankPointsMap.get(ts) : null,
+      ),
+    }),
   );
 }
 
@@ -275,6 +289,7 @@ async function fetchAndDisplayUserData() {
         "ユーザーが見つかりません";
       return;
     }
+    let anotherPlotRankValue = parseInt(anotherPlotRank.value);
 
     await loadStaticData();
 
@@ -328,6 +343,7 @@ async function fetchAndDisplayUserData() {
     }));
 
     const currentRank = lastRecord.rank;
+    const rankConditions = [String(currentRank), anotherPlotRankValue];
 
     let rankOneStartTimestamp = null;
     const { data: rankOneData, error: rankOneError } = await client
@@ -341,12 +357,11 @@ async function fetchAndDisplayUserData() {
       rankOneStartTimestamp = getMinuteTimestamp(rankOneData[0].TimeStamp);
     }
 
-    const rankScoreMap = new Map();
-    let rankPoints = [];
+    const rankPointsByRank = new Map();
     const { data: rankData, error: rankError } = await client
       .from("eventboard_archive")
-      .select("score, TimeStamp")
-      .eq("rank", currentRank)
+      .select("rank, score, TimeStamp")
+      .in("rank", rankConditions)
       .order("TimeStamp", { ascending: true });
 
     if (!rankError && rankData) {
@@ -357,13 +372,13 @@ async function fetchAndDisplayUserData() {
           record.score !== undefined
         ) {
           const timestamp = getMinuteTimestamp(record.TimeStamp);
-          rankScoreMap.set(timestamp, record.score);
+          const rankValue = String(record.rank ?? "");
+          if (!rankPointsByRank.has(rankValue)) {
+            rankPointsByRank.set(rankValue, new Map());
+          }
+          rankPointsByRank.get(rankValue).set(timestamp, record.score);
         }
       });
-      rankPoints = Array.from(rankScoreMap, ([timestamp, score]) => ({
-        timestamp,
-        score,
-      }));
     }
 
     const nowTimestamp = getMinuteTimestamp(Date.now());
@@ -392,15 +407,12 @@ async function fetchAndDisplayUserData() {
       }),
     );
 
-    const rankPointsMap = new Map(
-      rankPoints.map((item) => [item.timestamp, item.score]),
-    );
-
     const scores = timestampKeys.map((ts) =>
       playerScoreMap.has(ts) ? playerScoreMap.get(ts) : null,
     );
-    const rankScores = timestampKeys.map((ts) =>
-      rankPointsMap.has(ts) ? rankPointsMap.get(ts) : null,
+    const rankSeriesData = buildRankSeriesFromMap(
+      timestampKeys,
+      rankPointsByRank,
     );
     const scoreDiffs = computeScoreDiffs(scores);
 
@@ -411,15 +423,15 @@ async function fetchAndDisplayUserData() {
         currentEventTimeRange?.endTimestamp,
         nowTimestamp,
         playerScoreMap,
-        rankPointsMap,
+        rankPointsByRank,
       );
     }
 
     // 1時間ごとのイベントPt変動数を計算して表示
     if (data.length > 0) {
       createHourlyChangeTable(data);
-      createScoreDifferenceTable(timestampKeys, scores);
-      createScoreDifferenceHourlyTable(timestampKeys, scores);
+      createScoreDifferenceTable(timestampKeys, scores, rankSeriesData);
+      createScoreDifferenceHourlyTable(timestampKeys, scores, rankSeriesData);
       setupTableViewToggle();
     }
 
@@ -464,7 +476,7 @@ function replaceZeroToBefore(data) {
 function renderScoreChart(
   timestamps,
   scores,
-  rankScores,
+  rankSeriesData,
   scoreDiffs,
   predictedScores,
   viewType,
@@ -499,21 +511,25 @@ function renderScoreChart(
       spanGaps: true,
     });
   } else {
-    if (rankScores && rankScores.length > 0) {
-      datasets.push({
-        label: "同rankのイベントPt",
-        data: rankScores,
-        borderColor: "#4A90E2",
-        backgroundColor: "rgba(74, 144, 226, 0.1)",
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: "#4A90E2",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        spanGaps: true,
+    if (Array.isArray(rankSeriesData) && rankSeriesData.length > 0) {
+      const rankColors = ["#4A90E2", "#F5A623", "#7B61FF", "#2ECC71"];
+      rankSeriesData.forEach(({ rank, values }, index) => {
+        const color = rankColors[index % rankColors.length];
+        datasets.push({
+          label: rank === "100" ? "100位のイベントPt" : `${rank}位のイベントPt`,
+          data: values,
+          borderColor: color,
+          backgroundColor: `${color}20`,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointBackgroundColor: color,
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          spanGaps: true,
+        });
       });
     }
 
@@ -620,7 +636,7 @@ function setupChartControls(
   eventEndTimestamp,
   nowTimestamp,
   playerScoreMap,
-  rankPointsMap,
+  rankPointsByRank,
   initialLabels,
   scoreDiffs,
 ) {
@@ -650,7 +666,10 @@ function setupChartControls(
       }),
     );
     const scores = buildSeriesFromMap(timestampKeys, playerScoreMap);
-    const rankScores = buildSeriesFromMap(timestampKeys, rankPointsMap);
+    const rankSeriesData = buildRankSeriesFromMap(
+      timestampKeys,
+      rankPointsByRank,
+    );
     const scoreDiffsForView = computeScoreDiffs(scores);
     const predictedScores = buildPredictionDataset(
       timestampKeys,
@@ -662,7 +681,7 @@ function setupChartControls(
     renderScoreChart(
       timestamps,
       scores,
-      rankScores,
+      rankSeriesData,
       scoreDiffsForView,
       predictedScores,
       viewType,
@@ -773,12 +792,24 @@ function createHourlyChangeTable(data) {
 }
 
 // 1分ごとのイベントPt差分を計算して表示
-function createScoreDifferenceTable(timestampKeys, scores) {
+function createScoreDifferenceTable(
+  timestampKeys,
+  scores,
+  rankSeriesData = [],
+) {
   let previousScore = null;
+  let previousRankScores = rankSeriesData.map(() => null);
   let tableHTML =
     '<table id="scoreDiffTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th></tr>';
+    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th>';
+
+  rankSeriesData.forEach(({ rank }) => {
+    const label = rank === "100" ? "100位イベントPt" : `${rank}位イベントPt`;
+    tableHTML += `<th class="header" style="padding: 8px; text-align: center;">${label}</th><th class="header" style="padding: 8px; text-align: center;">${label}差分</th>`;
+  });
+
+  tableHTML += "</tr>";
 
   timestampKeys.forEach((timestamp, index) => {
     const score = scores[index];
@@ -797,7 +828,26 @@ function createScoreDifferenceTable(timestampKeys, scores) {
       hour12: false,
     });
 
-    tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${scoreText}</td><td style="padding: 8px; text-align: center;">${diffText}</td></tr>`;
+    tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${scoreText}</td><td style="padding: 8px; text-align: center;">${diffText}</td>`;
+
+    rankSeriesData.forEach(({ values }, seriesIndex) => {
+      const rankScore = values[index];
+      const rankScoreText =
+        rankScore === null || rankScore === undefined ? "-" : rankScore;
+      const rankDiff =
+        rankScore === null ||
+        rankScore === undefined ||
+        previousRankScores[seriesIndex] === null
+          ? null
+          : rankScore - previousRankScores[seriesIndex];
+      const rankDiffText =
+        rankDiff === null ? "-" : rankDiff > 0 ? `${rankDiff}` : `${rankDiff}`;
+      tableHTML += `<td style="padding: 8px; text-align: center;">${rankScoreText}</td><td style="padding: 8px; text-align: center;">${rankDiffText}</td>`;
+      previousRankScores[seriesIndex] =
+        rankScore === null || rankScore === undefined ? null : rankScore;
+    });
+
+    tableHTML += "</tr>";
 
     previousScore = score === null || score === undefined ? null : score;
   });
@@ -808,18 +858,31 @@ function createScoreDifferenceTable(timestampKeys, scores) {
     wrapper.innerHTML = tableHTML;
   }
 }
-function createScoreDifferenceHourlyTable(Timestamps, scores) {
+function createScoreDifferenceHourlyTable(
+  Timestamps,
+  scores,
+  rankSeriesData = [],
+) {
   // 毎時0分のイベントPtを比較し、その差分を1時間ごとにテーブル化
   let tableHTML =
     '<table id="scoreDiffHourlyTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th></tr>';
+    '<tr><th class="header" style="padding: 8px; text-align: center;">日時</th><th class="header" style="padding: 8px; text-align: center;">イベントPt</th><th class="header" style="padding: 8px; text-align: center;">差分</th>';
+
+  rankSeriesData.forEach(({ rank }) => {
+    const label = rank === "100" ? "100位イベントPt" : `${rank}位イベントPt`;
+    tableHTML += `<th class="header" style="padding: 8px; text-align: center;">${label}</th>`;
+    tableHTML += `<th class="header" style="padding: 8px; text-align: center;">${rank}位の時速</th>`;
+  });
+
+  tableHTML += "</tr>";
   // 毎時0分のデータのみをまず抽出
   const hourlyData = Timestamps.map((timestamp, index) => {
     const date = new Date(timestamp);
     if (date.getMinutes() === 0) {
       return {
         timestamp,
+        index,
         score: scores[index],
         formattedDate: date.toLocaleString("ja-JP", {
           year: "numeric",
@@ -839,15 +902,35 @@ function createScoreDifferenceHourlyTable(Timestamps, scores) {
   }
 
   let previousScore = null;
+  let previousRankScores = rankSeriesData.map(() => null);
   hourlyData.forEach((data) => {
-    const { formattedDate, score } = data;
+    const { formattedDate, score, index } = data;
     const diff =
       score === null || score === undefined || previousScore === null
         ? null
         : score - previousScore;
     const diffText = diff === null ? "-" : diff > 0 ? `${diff}` : `${diff}`;
     const intertscore = score === null || score === undefined ? "-" : score;
-    tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${intertscore}</td><td style="padding: 8px; text-align: center;">${diffText}</td></tr>`;
+    tableHTML += `<tr><td style="padding: 8px; text-align: center;">${formattedDate}</td><td style="padding: 8px; text-align: center;">${intertscore}</td><td style="padding: 8px; text-align: center;">${diffText}</td>`;
+
+    rankSeriesData.forEach(({ values }, seriesIndex) => {
+      const rankScore = values[index];
+      const rankScoreText =
+        rankScore === null || rankScore === undefined ? "-" : rankScore;
+      const rankDiff =
+        rankScore === null ||
+        rankScore === undefined ||
+        previousRankScores[seriesIndex] === null
+          ? null
+          : rankScore - previousRankScores[seriesIndex];
+      const rankDiffText =
+        rankDiff === null ? "-" : rankDiff > 0 ? `${rankDiff}` : `${rankDiff}`;
+      tableHTML += `<td style="padding: 8px; text-align: center;">${rankScoreText}</td><td style="padding: 8px; text-align: center;">${rankDiffText}</td>`;
+      previousRankScores[seriesIndex] =
+        rankScore === null || rankScore === undefined ? null : rankScore;
+    });
+
+    tableHTML += "</tr>";
     previousScore = score;
   });
 
@@ -879,7 +962,7 @@ function createEventHistoryTable(historyData) {
   let tableHTML =
     '<table id="eventHistoryTable" border="1" style="border-collapse: collapse; margin-top: 20px; width: 100%;">';
   tableHTML +=
-    '<tr class="header"><th style="padding: 8px; text-align: center;">イベント名</th><th style="padding: 8px; text-align: center;">詳細名</th><th style="padding: 8px; text-align: center;">ランク</th></tr>';
+    '<tr class="header"><th style="padding: 8px; text-align: center;">イベント名</th><th style="padding: 8px; text-align: center;">詳細名</th><th style="padding: 8px; text-align: center;">順位</th></tr>';
 
   historyData.forEach((record) => {
     const eventId = parseInt(record.eventId);
@@ -973,7 +1056,9 @@ function setupTableViewToggle() {
   updateView();
 }
 async function copytableContents() {
-  const currenttable = document.querySelector('input[name="tableView"]:checked')?.value;
+  const currenttable = document.querySelector(
+    'input[name="tableView"]:checked',
+  )?.value;
   let tableId = "";
   switch (currenttable) {
     case "diff":
@@ -1012,5 +1097,11 @@ async function copytableContents() {
 // ページ読み込み時にデータを取得
 document.addEventListener("DOMContentLoaded", fetchAndDisplayUserData);
 
+startBtn.addEventListener("click", () => {
+  // グラフの再プロット処理を追々追加する
+  fetchAndDisplayUserData();
+});
 // コピー機能の設定
-document.getElementById("copy-btn").addEventListener("click", copytableContents);
+document
+  .getElementById("copy-btn")
+  .addEventListener("click", copytableContents);
