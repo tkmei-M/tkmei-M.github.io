@@ -663,7 +663,7 @@ function renderScoreChart(
             color: "#666",
             maxRotation: 45,
             minRotation: 0,
-            display: false,
+            // display: false,
           },
           grid: {
             color: "rgba(0, 0, 0, 0.1)",
